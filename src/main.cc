@@ -190,8 +190,10 @@ main(int argc, char** argv) {
 
     control = new Control;
     
-    srandom(cachedTime.usec() ^ (getpid() << 16) ^ getppid());
-    srand48(cachedTime.usec() ^ (getpid() << 16) ^ getppid());
+    unsigned int random_seed = cachedTime.seconds() ^ cachedTime.usec() ^ (getpid() << 16) ^ getppid();
+
+    srandom(random_seed);
+    srand48(random_seed);
 
     SignalHandler::set_ignore(SIGPIPE);
     SignalHandler::set_handler(SIGINT,   std::bind(&Control::receive_normal_shutdown, control));
@@ -831,9 +833,19 @@ main(int argc, char** argv) {
     int firstArg = parse_options(control, argc, argv);
 
     if (OptionParser::has_flag('n', argc, argv)) {
-      lt_log_print(torrent::LOG_WARN, "Ignoring ~/.rtorrent.rc.");
+      lt_log_print(torrent::LOG_WARN, "Ignoring rtorrent.rc.");
     } else {
-      rpc::parse_command_single(rpc::make_target(), "try_import = ~/.rtorrent.rc");
+      char* config_dir = std::getenv("XDG_CONFIG_HOME");
+      char* home_dir = std::getenv("HOME");
+
+      if (config_dir != NULL && config_dir[0] == '/' &&
+          access((std::string(config_dir) + "/rtorrent/rtorrent.rc").c_str(), F_OK) != -1) {
+        rpc::parse_command_single(rpc::make_target(), "try_import = " + std::string(config_dir) + "/rtorrent/rtorrent.rc");
+      } else if (home_dir != NULL && access((std::string(home_dir) + "/.config/rtorrent/rtorrent.rc").c_str(), F_OK) != -1) {
+        rpc::parse_command_single(rpc::make_target(), "try_import = ~/.config/rtorrent/rtorrent.rc");
+      } else {
+        rpc::parse_command_single(rpc::make_target(), "try_import = ~/.rtorrent.rc");
+      }
     }
 
     control->initialize();
