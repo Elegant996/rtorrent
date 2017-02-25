@@ -5,12 +5,12 @@
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation; either version 2 of the License, or
 // (at your option) any later version.
-//
+// 
 // This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU General Public License for more details.
-//
+// 
 // You should have received a copy of the GNU General Public License
 // along with this program; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -39,7 +39,6 @@
 #include <unistd.h>
 #include <sys/stat.h>
 #include <torrent/connection_manager.h>
-#include <torrent/utils/directory_events.h>
 
 #include "core/manager.h"
 #include "core/download_store.h"
@@ -68,7 +67,6 @@ Control::Control() :
 
   m_commandScheduler(new rpc::CommandScheduler()),
   m_objectStorage(new rpc::object_storage()),
-  m_directory_events(new torrent::directory_events()),
 
   m_tick(0),
   m_shutdownReceived(false),
@@ -78,9 +76,9 @@ Control::Control() :
   m_viewManager = new core::ViewManager();
   m_dhtManager  = new core::DhtManager();
 
-  m_inputStdin->slot_pressed(std::bind(&input::Manager::pressed, m_input, std::placeholders::_1));
+  m_inputStdin->slot_pressed(std::tr1::bind(&input::Manager::pressed, m_input, std::tr1::placeholders::_1));
 
-  m_taskShutdown.slot() = std::bind(&Control::handle_shutdown, this);
+  m_taskShutdown.slot() = std::tr1::bind(&Control::handle_shutdown, this);
 
   m_commandScheduler->set_slot_error_message(rak::mem_fn(m_core, &core::Manager::push_log_std));
 }
@@ -96,7 +94,6 @@ Control::~Control() {
   delete m_core;
   delete m_dhtManager;
 
-  delete m_directory_events;
   delete m_commandScheduler;
   delete m_objectStorage;
 }
@@ -118,7 +115,7 @@ Control::initialize() {
 
   m_ui->init(this);
 
-  if(!display::Canvas::daemon()) {
+  if (!display::Canvas::daemon()) {
     m_inputStdin->insert(torrent::main_thread()->poll());
   }
 }
@@ -130,7 +127,7 @@ Control::cleanup() {
 
   priority_queue_erase(&taskScheduler, &m_taskShutdown);
 
-  if(!display::Canvas::daemon()) {
+  if (!display::Canvas::daemon()) {
     m_inputStdin->remove(torrent::main_thread()->poll());
   }
 
@@ -138,7 +135,7 @@ Control::cleanup() {
 
   m_ui->cleanup();
   m_core->cleanup();
-
+  
   display::Canvas::erase_std();
   display::Canvas::refresh_std();
   display::Canvas::do_update();
@@ -174,7 +171,6 @@ Control::handle_shutdown() {
       worker_thread->queue_item(&ThreadBase::stop_thread);
 
     torrent::connection_manager()->listen_close();
-    m_directory_events->close();
     m_core->shutdown(false);
 
     if (!m_taskShutdown.is_queued())
