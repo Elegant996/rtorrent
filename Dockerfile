@@ -102,4 +102,4 @@ WORKDIR $HOME
 ENTRYPOINT [ "/sbin/tini", "--", "/entrypoint.sh" ]
 CMD [ "/usr/local/bin/rtorrent" ]
 HEALTHCHECK --start-period=10s \
-  CMD nc -z 127.0.0.1 5000 || exit 1
+  CMD /usr/bin/nc -z 127.0.0.1 5000 || exit 1
