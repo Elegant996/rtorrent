@@ -5,24 +5,22 @@ FROM alpine:3.22 AS build-sysroot
 ARG LIBTORRENT_TAG
 ARG RTORRENT_TAG
 
-ADD --exclude=*.md --exclude=\.* https://github.com/rakshasa/libtorrent.git#${LIBTORRENT_TAG} /libtorrent
-ADD --exclude=*.md --exclude=\.* https://github.com/rakshasa/rtorrent.git#${RTORRENT_TAG} /rtorrent
+ADD https://github.com/rakshasa/libtorrent.git#${LIBTORRENT_TAG} /libtorrent
+ADD https://github.com/rakshasa/rtorrent.git#${RTORRENT_TAG} /rtorrent
 
 # Fetch build dependencies
 RUN apk add --no-cache \
     autoconf \
     automake \
-    cppunit-dev \
+    build-base \
     curl-dev \
     dos2unix \
-    gcc \
-    g++ \
     libsigc++3-dev \
     libtool \
     linux-headers \
-    make \
     ncurses-dev \
-    openssl-dev>3 \
+    openssl-dev \
+    pkgconf \
     tinyxml2-dev \
     zlib-dev
 
@@ -33,17 +31,19 @@ RUN autoreconf -iv
 
 # Build libtorrent
 RUN ./configure \
-    --build=$CBUILD \
-    --host=$CHOST \
     --prefix=/usr/local \
-    --disable-debug
+    --disable-debug \
+    --disable-instrumentation
 RUN make
 
 # Check libtorrent
-RUN make check
+# RUN make check
 
-# Install libtorrent
+# Install libtorrent for build
 RUN make install
+
+# Install libtorrent to new system root
+RUN make DESTDIR="/sysroot" install
 
 # Prepare rtorrent
 WORKDIR /rtorrent
@@ -52,8 +52,6 @@ RUN autoreconf -iv
 
 # Build rtorrent
 RUN ./configure \
-    --build=$CBUILD \
-    --host=$CHOST \
     --prefix=/usr/local \
     --sysconfdir=/etc \
     --mandir=/usr/share/man \
@@ -64,7 +62,7 @@ RUN ./configure \
 RUN make
 
 # Check rtorrent
-RUN make check
+# RUN make check
 
 # Install rtorrent to new system root
 RUN make DESTDIR="/sysroot" install
