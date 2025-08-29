@@ -13,6 +13,7 @@ RUN apk add --no-cache \
     autoconf \
     automake \
     build-base \
+    cppunit-dev \
     curl-dev \
     dos2unix \
     libsigc++3-dev \
@@ -31,9 +32,11 @@ RUN autoreconf -iv
 
 # Build libtorrent
 RUN ./configure \
+    --host=${HOST} \
     --prefix=/usr/local \
     --disable-debug \
-    --disable-instrumentation
+    --disable-shared \
+    --enable-static
 RUN make
 
 # Check libtorrent
@@ -52,12 +55,15 @@ RUN autoreconf -iv
 
 # Build rtorrent
 RUN ./configure \
+    --host=${HOST} \
     --prefix=/usr/local \
     --sysconfdir=/etc \
     --mandir=/usr/share/man \
     --localstatedir=/var \
     --enable-ipv6 \
     --disable-debug \
+    --disable-shared \
+    --enable-static \
     --with-xmlrpc-tinyxml2
 RUN make
 
