@@ -32,7 +32,6 @@ RUN autoreconf -iv
 
 # Build libtorrent
 RUN ./configure \
-    --host=${HOST} \
     --prefix=/usr/local \
     --disable-debug \
     --disable-shared \
@@ -45,9 +44,6 @@ RUN make
 # Install libtorrent for build
 RUN make install
 
-# Install libtorrent to new system root
-RUN make DESTDIR="/sysroot" install
-
 # Prepare rtorrent
 WORKDIR /rtorrent
 RUN find . -type f -print0 | xargs -0 dos2unix
@@ -55,7 +51,6 @@ RUN autoreconf -iv
 
 # Build rtorrent
 RUN ./configure \
-    --host=${HOST} \
     --prefix=/usr/local \
     --sysconfdir=/etc \
     --mandir=/usr/share/man \
@@ -89,8 +84,7 @@ RUN apk add --no-cache --initdb -p /sysroot \
     ncurses-terminfo-base \
     netcat-openbsd \
     tini \
-    tzdata \
-    unzip
+    tzdata
 RUN rm -rf /sysroot/etc/apk /sysroot/lib/apk /sysroot/var/cache
 
 # Install entrypoint
