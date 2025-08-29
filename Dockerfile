@@ -50,7 +50,9 @@ RUN find . -type f -print0 | xargs -0 dos2unix
 RUN autoreconf -iv
 
 # Build rtorrent
-RUN ./configure \
+
+RUN CXXFLAGS="-fno-strict-aliasing" ./configure \
+    LDFLAGS="-static" \
     --prefix=/usr/local \
     --sysconfdir=/etc \
     --mandir=/usr/share/man \
@@ -59,6 +61,7 @@ RUN ./configure \
     --disable-debug \
     --disable-shared \
     --enable-static \
+    --with-ncursesw \
     --with-xmlrpc-tinyxml2
 RUN make
 
