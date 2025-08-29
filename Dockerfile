@@ -44,15 +44,16 @@ RUN make
 # Install libtorrent for build
 RUN make install
 
+# Install libtorrent to new system root
+RUN make DESTDIR="/sysroot" install
+
 # Prepare rtorrent
 WORKDIR /rtorrent
 RUN find . -type f -print0 | xargs -0 dos2unix
 RUN autoreconf -iv
 
 # Build rtorrent
-
-RUN CXXFLAGS="-fno-strict-aliasing" ./configure \
-    LDFLAGS="-static" \
+RUN ./configure \
     --prefix=/usr/local \
     --sysconfdir=/etc \
     --mandir=/usr/share/man \
@@ -83,11 +84,14 @@ RUN apk add --no-cache --initdb -p /sysroot \
     ca-certificates \
     curl \
     jq \
+    libcrypto3 \
+    libncursesw \
+    libstdc++ \
     mktorrent \
-    ncurses-terminfo-base \
     netcat-openbsd \
     tini \
-    tzdata
+    tzdata \
+    zlib
 RUN rm -rf /sysroot/etc/apk /sysroot/lib/apk /sysroot/var/cache
 
 # Install entrypoint
