@@ -5,7 +5,7 @@ toolchain=$(mktemp -d "tmp_XXXXXX")
 wget -qO- https://skarnet.org/toolchains/cross/x86_64-linux-musl_pc-14.2.0.tar.xz | tar -xvJf - -C "${toolchain}" --strip-components=1
 
 # Flag sets
-RTORRENT_RELEASE=$1
+RELEASE_VERSION=${1}
 OPTIMIZATION_FLAGS="-O3 -flto=auto -pipe -fdata-sections -ffunction-sections -pthread"
 PREPROCESSOR_FLAGS="-U_FORTIFY_SOURCE -D_FORTIFY_SOURCE=3"
 SECURITY_FLAGS="-fstack-clash-protection -fstack-protector-strong -fno-plt -fno-delete-null-pointer-checks -fno-strict-overflow -fno-strict-aliasing -ftrivial-auto-var-init=zero -fexceptions"
@@ -13,6 +13,7 @@ LINKER_FLAGS="-flto=auto -pthread -s -Wl,-O1,--gc-sections,--sort-common,--strip
 STATIC_FLAGS="-static --static"
 
 # Compiler configurations
+export RTORRENT_RELEASE=${RELEASE_VERSION}
 export CC="x86_64-linux-musl-gcc"
 export CXX="x86_64-linux-musl-g++"
 export AR="x86_64-linux-musl-ar"
@@ -42,6 +43,29 @@ build_tarball() {
     ./configure --prefix="${PREFIX}" ${configure_args}
     make -j"$(nproc)"
     make install
+  )
+
+  rm -rf "${temp_name}"
+}
+
+build_rtorrent() {
+  local url="${1}"
+  local configure_args="${2}"
+  local temp_name
+  temp_name=$(mktemp -d "tmp_XXXXXX")
+
+  (
+    cd "${temp_name}"
+    wget -qO- "${url}" | tar -xvzf - --strip-components=1
+
+    ./configure ${configure_args} \
+        --prefix=/usr/local \
+        --sysconfdir=/etc \
+        --mandir=/usr/share/man \
+        --localstatedir=/var
+    make -j"$(nproc)"
+    make DESTDIR="/sysroot" install
+    install -Dm644 doc/rtorrent.rc /sysroot/etc/rtorrent/rtorrent.rc
   )
 
   rm -rf "${temp_name}"
@@ -83,9 +107,8 @@ build_tarball "https://github.com/rakshasa/rtorrent/releases/download/v${RTORREN
   "--disable-debug --disable-shared --enable-static --host=${HOST}"
 
 # Build rtorrent
-build_tarball "https://github.com/rakshasa/rtorrent/releases/download/v${RTORRENT_RELEASE}/rtorrent-${RTORRENT_RELEASE}.tar.gz" \
+build_rtorrent "https://github.com/rakshasa/rtorrent/releases/download/v${RTORRENT_RELEASE}/rtorrent-${RTORRENT_RELEASE}.tar.gz" \
   "--disable-debug --disable-shared --enable-static --with-xmlrpc-tinyxml2 --host=${HOST}"
 
-# Copy final binary and clean up
-cp "${PREFIX}/bin/rtorrent" ./rtorrent_static
+# Clean up
 rm -rf "${toolchain}"

@@ -2,7 +2,8 @@
 
 FROM alpine:3.22 AS build-sysroot
 
-ARG RTORRENT_RELEASE
+ARG RTORRENT_VERSION
+ENV RTORRENT_VERSION=${RTORRENT_VERSION}
 
 # Fetch build dependencies
 RUN apk add --no-cache \
@@ -12,15 +13,11 @@ RUN apk add --no-cache \
 # Prepare build script
 COPY --chmod=755 ./build.sh .
 
-# Build rtorrent
-RUN ./build.sh ${RTORRENT_RELEASE}
-
-# Install rtorrent to new system root
-RUN make DESTDIR="/sysroot" install
-RUN install -Dm644 doc/rtorrent.rc /sysroot/etc/rtorrent/rtorrent.rc
-RUN mkdir -p /sysroot/download /sysroot/session /sysroot/watch
+# Build rtorrent and install to new system root
+RUN ./build.sh ${RTORRENT_VERSION}
 
 # Prepare sysroot
+RUN mkdir -p /sysroot/download /sysroot/session /sysroot/watch
 RUN mkdir -p /sysroot/etc/apk && cp -r /etc/apk/* /sysroot/etc/apk/
 
 # Fetch runtime dependencies
