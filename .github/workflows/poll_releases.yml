@@ -237,8 +237,7 @@ jobs:
         id: buildx1
         with:
           build-args: |
-            LIBTORRENT_TAG=${{ matrix.tag }}
-            RTORRENT_TAG=${{ matrix.tag }}
+            RTORRENT_VERSION=${{ matrix.version }}
           context: .
           platforms: linux/${{ matrix.arch }}
           push: true
@@ -257,8 +256,7 @@ jobs:
         if: steps.buildx1.outcome != 'success'
         with:
           build-args: |
-            LIBTORRENT_TAG=${{ matrix.tag }}
-            RTORRENT_TAG=${{ matrix.tag }}
+            RTORRENT_VERSION=${{ matrix.version }}
           context: .
           platforms: linux/${{ matrix.arch }}
           push: true

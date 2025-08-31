@@ -2,72 +2,18 @@
 
 FROM alpine:3.22 AS build-sysroot
 
-ARG LIBTORRENT_TAG
-ARG RTORRENT_TAG
-
-ADD https://github.com/rakshasa/libtorrent.git#${LIBTORRENT_TAG} /libtorrent
-ADD https://github.com/rakshasa/rtorrent.git#${RTORRENT_TAG} /rtorrent
+ARG RTORRENT_RELEASE
 
 # Fetch build dependencies
 RUN apk add --no-cache \
-    autoconf \
-    automake \
-    build-base \
-    cppunit-dev \
-    curl-dev \
-    dos2unix \
-    libsigc++3-dev \
-    libtool \
-    linux-headers \
-    ncurses-dev \
-    openssl-dev \
-    pkgconf \
-    tinyxml2-dev \
-    zlib-dev
+    make \
+    pkgconf
 
-# Prepare libtorrent
-WORKDIR /libtorrent
-RUN find . -type f -print0 | xargs -0 dos2unix
-RUN autoreconf -iv
-
-# Build libtorrent
-RUN ./configure \
-    --prefix=/usr/local \
-    --disable-debug \
-    --disable-shared \
-    --enable-static
-RUN make
-
-# Check libtorrent
-# RUN make check
-
-# Install libtorrent for build
-RUN make install
-
-# Install libtorrent to new system root
-RUN make DESTDIR="/sysroot" install
-
-# Prepare rtorrent
-WORKDIR /rtorrent
-RUN find . -type f -print0 | xargs -0 dos2unix
-RUN autoreconf -iv
+# Prepare build script
+COPY --chmod=755 ./build.sh .
 
 # Build rtorrent
-RUN ./configure \
-    --prefix=/usr/local \
-    --sysconfdir=/etc \
-    --mandir=/usr/share/man \
-    --localstatedir=/var \
-    --enable-ipv6 \
-    --disable-debug \
-    --disable-shared \
-    --enable-static \
-    --with-ncursesw \
-    --with-xmlrpc-tinyxml2
-RUN make
-
-# Check rtorrent
-# RUN make check
+RUN ./build.sh ${RTORRENT_RELEASE}
 
 # Install rtorrent to new system root
 RUN make DESTDIR="/sysroot" install
@@ -84,14 +30,11 @@ RUN apk add --no-cache --initdb -p /sysroot \
     ca-certificates \
     curl \
     jq \
-    libcrypto3 \
-    libncursesw \
-    libstdc++ \
     mktorrent \
+    ncurses-terminfo-base \
     netcat-openbsd \
     tini \
-    tzdata \
-    zlib
+    tzdata
 RUN rm -rf /sysroot/etc/apk /sysroot/lib/apk /sysroot/var/cache
 
 # Install entrypoint
