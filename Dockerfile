@@ -28,7 +28,6 @@ RUN apk add --no-cache --initdb -p /sysroot \
     curl \
     jq \
     mktorrent \
-    ncurses-terminfo-base \
     netcat-openbsd \
     tini \
     tzdata
@@ -47,6 +46,6 @@ VOLUME [ "/download" ]
 ENV HOME="/download"
 WORKDIR $HOME
 ENTRYPOINT [ "/sbin/tini", "--", "/entrypoint.sh" ]
-CMD [ "/usr/local/bin/rtorrent" ]
+CMD [ "/usr/local/bin/rtorrent", "-n", "-o", "import=/etc/rtorrent/rtorrent.rc" ]
 HEALTHCHECK --start-period=10s \
   CMD /usr/bin/nc -z 127.0.0.1 5000 || exit 1
