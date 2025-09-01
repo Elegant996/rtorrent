@@ -85,11 +85,11 @@ build_tarball "https://ftp.openbsd.org/pub/OpenBSD/LibreSSL/libressl-4.1.0.tar.g
 
 # Setup SSL certs and build curl
 # cacert.pem needs to be in same location on target host
-mkdir -p /opt/etc/ssl
-wget https://curl.se/ca/cacert.pem -O /opt/etc/ssl/cacert.pem
+mkdir -p /etc/ssl
+wget https://curl.se/ca/cacert.pem -O /etc/ssl/cert.pem
 build_tarball "https://curl.se/download/curl-8.15.0.tar.gz" \
   "--disable-shared --enable-ares --enable-static --without-libpsl --host=${HOST} \
-   --with-ca-bundle=/opt/etc/ssl/cacert.pem --with-openssl \
+   --with-ca-bundle=/etc/ssl/cert.pem --with-openssl \
    --disable-docs --disable-manual --disable-dict --disable-gopher --disable-gophers --disable-imap \
    --disable-imaps --disable-ipfs --disable-mqtt --disable-pop3 --disable-pop3s --disable-rtsp \
    --disable-smb --disable-smbs --disable-smtp --disable-smtps --disable-telnet --disable-tftp"
