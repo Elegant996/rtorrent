@@ -79,6 +79,10 @@ build_tarball "https://zlib.net/zlib-1.3.1.tar.gz" \
 build_tarball "https://github.com/c-ares/c-ares/releases/download/v1.34.5/c-ares-1.34.5.tar.gz" \
   "--disable-shared --enable-static --host=${HOST}"
 
+# Build nghttp2 (OPTIONAL)
+build_tarball "https://github.com/nghttp2/nghttp2/releases/download/v1.66.0/nghttp2-1.66.0.tar.gz" \
+  "--disable-shared --enable-static"
+
 # Build libressl
 build_tarball "https://ftp.openbsd.org/pub/OpenBSD/LibreSSL/libressl-4.1.0.tar.gz" \
   "--disable-shared --enable-static --host=${HOST}"
