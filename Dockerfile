@@ -3,25 +3,138 @@
 FROM alpine:3.22 AS build-sysroot
 
 ARG RTORRENT_VERSION
-ENV RTORRENT_VERSION=${RTORRENT_VERSION}
+
+# Add sources
+ADD "https://skarnet.org/toolchains/cross/x86_64-linux-musl_pc-14.2.0.tar.xz" "/archives/toolchain.tar.xz"
+ADD "https://github.com/madler/zlib/releases/download/v1.3.1/zlib-1.3.1.tar.gz" "/archives/zlib.tar.gz"
+ADD "https://github.com/c-ares/c-ares/releases/download/v1.34.5/c-ares-1.34.5.tar.gz" "/archives/c-ares.tar.gz"
+ADD "https://github.com/nghttp2/nghttp2/releases/download/v1.66.0/nghttp2-1.66.0.tar.gz" "/archives/nghttp2.tar.gz"
+ADD "https://github.com/libressl/portable/releases/download/v4.1.0/libressl-4.1.0.tar.gz" "/archives/libressl.tar.gz"
+ADD "https://github.com/curl/curl/releases/download/curl-8_15_0/curl-8.15.0.tar.gz" "/archives/curl.tar.gz"
+ADD "https://ftpmirror.gnu.org/ncurses/ncurses-6.5.tar.gz" "/archives/ncurses.tar.gz"
+ADD "https://github.com/rakshasa/rtorrent/releases/download/v${RTORRENT_VERSION}/libtorrent-${RTORRENT_VERSION}.tar.gz" "/archives/libtorrent.tar.gz"
+ADD "https://github.com/rakshasa/rtorrent/releases/download/v${RTORRENT_VERSION}/rtorrent-${RTORRENT_VERSION}.tar.gz" "/archives/rtorrent.tar.gz"
+
+# Flag sets
+ARG OPTIMIZATION_FLAGS="-O3 -flto=auto -pipe -fdata-sections -ffunction-sections -pthread"
+ARG PREPROCESSOR_FLAGS="-U_FORTIFY_SOURCE -D_FORTIFY_SOURCE=3"
+ARG SECURITY_FLAGS="-fstack-clash-protection -fstack-protector-strong -fno-plt -fno-delete-null-pointer-checks -fno-strict-overflow -fno-strict-aliasing -ftrivial-auto-var-init=zero -fexceptions"
+ARG LINKER_FLAGS="-flto=auto -pthread -s -Wl,-O1,--gc-sections,--sort-common,--strip-all,-z,nodlopen,-z,noexecstack,-z,max-page-size=65536"
+ARG STATIC_FLAGS="-static --static"
+
+# Compiler configurations
+ENV CC="x86_64-linux-musl-gcc"
+ENV CXX="x86_64-linux-musl-g++"
+ENV AR="x86_64-linux-musl-ar"
+ENV CFLAGS="${OPTIMIZATION_FLAGS} ${SECURITY_FLAGS} ${STATIC_FLAGS}"
+ENV CXXFLAGS="${CFLAGS}"
+ENV CPPFLAGS="${PREPROCESSOR_FLAGS}"
+ENV LDFLAGS="${LINKER_FLAGS} ${STATIC_FLAGS}"
+
+# Environmental care
+ENV HOST="x86_64-linux-musl"
+ENV PATH="${pwd}/toolchain/bin:${PATH}"
+ENV PREFIX="${pwd}/toolchain/${HOST}"
+ENV PKG_CONFIG_PATH="${PREFIX}/lib/pkgconfig"
+ENV PKG_CONFIG="pkg-config --static"
 
 # Fetch build dependencies
 RUN apk add --no-cache \
+    ca-certificates \
     make \
-    pkgconf
+    perl \
+    pkgconf \
+    tar \
+    xz
 
-# Prepare build script
-COPY --chmod=755 ./build.sh .
+# Setup toolchain
+WORKDIR /toolchain
+RUN tar -xvJf "/archives/toolchain.tar.xz" --strip-components=1
 
-# Build rtorrent and install to new system root
-RUN ./build.sh ${RTORRENT_VERSION}
+# Build static zlib
+WORKDIR /zlib
+RUN set -ex; \
+    tar -xvzf "/archives/zlib.tar.gz" --strip-components=1; \
+    ./configure --prefix="${PREFIX}" --64 --static; \
+    make -j"$(nproc)"; \
+    make install
+
+# Build static c-ares
+WORKDIR /c-ares
+RUN set -ex; \
+    tar -xvzf "/archives/c-ares.tar.gz" --strip-components=1; \
+    ./configure --prefix="${PREFIX}" --disable-shared --enable-static; \
+    make -j"$(nproc)"; \
+    make install
+
+# Build static nghttp2
+WORKDIR /nghttp2
+RUN set -ex; \
+    tar -xvzf "/archives/nghttp2.tar.gz" --strip-components=1; \
+    ./configure --prefix="${PREFIX}" --disable-shared --enable-static; \
+    make -j"$(nproc)"; \
+    make install
+
+# Build static libressl
+WORKDIR /libressl
+RUN set -ex; \
+    tar -xvzf "/archives/libressl.tar.gz" --strip-components=1; \
+    ./configure --prefix="${PREFIX}" --disable-shared --enable-static; \
+    make -j"$(nproc)"; \
+    make install
+
+# Build static curl
+WORKDIR /curl
+RUN set -ex; \
+    tar -xvzf "/archives/curl.tar.gz" --strip-components=1; \
+    ./configure --prefix="${PREFIX}" --disable-shared --enable-ares --enable-static \
+   --with-ca-bundle=/etc/ssl/cert.pem --with-openssl --without-libpsl \
+   --disable-docs --disable-manual --disable-dict --disable-gopher --disable-gophers --disable-imap \
+   --disable-imaps --disable-ipfs --disable-mqtt --disable-pop3 --disable-pop3s --disable-rtsp \
+   --disable-smb --disable-smbs --disable-smtp --disable-smtps --disable-telnet --disable-tftp; \
+    make -j"$(nproc)"; \
+    make install
+
+# Build static ncurses
+WORKDIR /ncurses
+RUN set -ex; \
+    tar -xvzf "/archives/ncurses.tar.gz" --strip-components=1; \
+    ./configure --prefix="${PREFIX}" --disable-shared --disable-stripping --host=${HOST} \
+   --enable-pc-files --enable-widec \
+   --with-default-terminfo-dir=/usr/share/terminfo \
+   --with-normal --with-termlib --enable-static; \
+    make -j"$(nproc)"; \
+    make install
+
+# Build static libtorrent
+WORKDIR /libtorrent
+RUN set -ex; \
+    tar -xvzf "/archives/libtorrent.tar.gz" --strip-components=1; \
+    ./configure --prefix="${PREFIX}" --disable-debug --disable-shared --enable-static --host=${HOST}; \
+    make -j"$(nproc)"; \
+    make install
+
+# Build static rtorrent
+WORKDIR /rtorrent
+RUN set -ex; \
+    tar -xvzf "/archives/rtorrent.tar.gz" --strip-components=1; \
+    ./configure --prefix=/usr/local --sysconfdir=/etc --mandir=/usr/share/man --localstatedir=/var \
+    --disable-debug --disable-shared --enable-static --with-xmlrpc-tinyxml2 --host=${HOST}; \
+    make -j"$(nproc)"; \
+    make DESTDIR="/sysroot" install; \
+    install -Dm644 doc/rtorrent.rc /sysroot/etc/rtorrent/rtorrent.rc; \
+    sed 's/#system.daemon.set = false/system.daemon.set = true/g' /sysroot/etc/rtorrent/rtorrent.rc; \
+    sed 's/#network.scgi.open_port/network.scgi.open_port/g' /sysroot/etc/rtorrent/rtorrent.rc
 
 # Prepare sysroot
-RUN mkdir -p /sysroot/download /sysroot/session /sysroot/watch
-RUN mkdir -p /sysroot/etc/apk && cp -r /etc/apk/* /sysroot/etc/apk/
+RUN set -ex; \
+    mkdir -p /sysroot/download /sysroot/session /sysroot/watch; \
+    mkdir -p /sysroot/etc/apk; \
+    cp -r /etc/apk/* /sysroot/etc/apk/
 
 # Fetch runtime dependencies
-RUN apk add --no-cache --initdb -p /sysroot \
+RUN set -ex; \
+    apk add --no-cache --initdb -p /sysroot \
     alpine-baselayout \
     busybox \
     ca-certificates \
@@ -30,8 +143,9 @@ RUN apk add --no-cache --initdb -p /sysroot \
     mktorrent \
     netcat-openbsd \
     tini \
-    tzdata
-RUN rm -rf /sysroot/etc/apk /sysroot/lib/apk /sysroot/var/cache
+    tzdata \
+    ; \
+    rm -rf /sysroot/etc/apk /sysroot/lib/apk /sysroot/var/cache
 
 # Install entrypoint
 COPY --chmod=755 ./entrypoint.sh /sysroot/entrypoint.sh
