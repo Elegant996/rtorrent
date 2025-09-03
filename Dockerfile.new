@@ -32,10 +32,6 @@ ENV LDFLAGS="${LINKER_FLAGS} ${STATIC_FLAGS}"
 
 # Environmental care
 ENV HOST="x86_64-linux-musl"
-ENV PATH="${pwd}/${toolchain}/bin:${PATH}"
-ENV PREFIX="${pwd}/${toolchain}/${HOST}"
-ENV PKG_CONFIG_PATH="${PREFIX}/lib/pkgconfig"
-ENV PKG_CONFIG="pkg-config --static"
 
 # Fetch build dependencies
 RUN apk add --no-cache \
@@ -54,35 +50,35 @@ RUN apk add --no-cache \
 # Build static zlib
 WORKDIR /zlib
 RUN tar -xvzf "/archives/zlib.tar.gz" --strip-components=1
-RUN ./configure --prefix="${PREFIX}" --64 --static
+RUN ./configure --64 --static
 RUN make -j"$(nproc)"
 RUN make install
 
 # Build static c-ares
 WORKDIR /c-ares
 RUN tar -xvzf "/archives/c-ares.tar.gz" --strip-components=1
-RUN ./configure --prefix="${PREFIX}" --disable-shared --enable-static --host=${HOST}
+RUN ./configure --disable-shared --enable-static
 RUN make -j"$(nproc)"
 RUN make install
 
 # Build static nghttp2
 WORKDIR /nghttp2
 RUN tar -xvzf "/archives/nghttp2.tar.gz" --strip-components=1
-RUN ./configure --prefix="${PREFIX}" --disable-shared --enable-static
+RUN ./configure --disable-shared --enable-static
 RUN make -j"$(nproc)"
 RUN make install
 
 # Build static libressl
 WORKDIR /libressl
 RUN tar -xvzf "/archives/libressl.tar.gz" --strip-components=1
-RUN ./configure --prefix="${PREFIX}" --disable-shared --enable-static --host=${HOST}
+RUN ./configure --disable-shared --enable-static
 RUN make -j"$(nproc)"
 RUN make install
 
 # Build static curl
 WORKDIR /curl
 RUN tar -xvzf "/archives/curl.tar.gz" --strip-components=1
-RUN ./configure --prefix="${PREFIX}"  --disable-shared --enable-ares --enable-static --host=${HOST} \
+RUN ./configure --disable-shared --enable-ares --enable-static \
    --with-ca-bundle=/etc/ssl/cert.pem --with-openssl --without-libpsl \
    --disable-docs --disable-manual --disable-dict --disable-gopher --disable-gophers --disable-imap \
    --disable-imaps --disable-ipfs --disable-mqtt --disable-pop3 --disable-pop3s --disable-rtsp \
@@ -93,7 +89,7 @@ RUN make install
 # Build static ncurses
 WORKDIR /ncurses
 RUN tar -xvzf "/archives/ncurses.tar.gz" --strip-components=1
-RUN ./configure --prefix="${PREFIX}" --disable-shared --disable-stripping --host=${HOST} \
+RUN ./configure --disable-shared --disable-stripping --host=${HOST} \
    --enable-pc-files --enable-widec \
    --with-default-terminfo-dir=/usr/share/terminfo \
    --with-normal --with-termlib --enable-static
@@ -103,7 +99,7 @@ RUN make install
 # Build static libtorrent
 WORKDIR /libtorrent
 RUN tar -xvzf "/archives/libtorrent.tar.gz" --strip-components=1
-RUN ./configure --prefix="${PREFIX}" --disable-debug --disable-shared --enable-static --host=${HOST}
+RUN ./configure --disable-debug --disable-shared --enable-static --host=${HOST}
 RUN make -j"$(nproc)"
 RUN make install
 
