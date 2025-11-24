@@ -45,10 +45,11 @@ jobs:
         id: upstream
         run: |
           TAG=$(curl -sL --request GET \
-            --url "${{ github.api_url }}/repos/rakshasa/rtorrent/tags" \
+            --url "${{ github.api_url }}/repos/rakshasa/rtorrent/releases" \
             --header "Accept: application/vnd.github+json" \
             --header "Authorization: token ${{ github.token }}" \
-            | jq -r 'first | .name // ""')
+            | jq --argjson pr ${{ matrix.prerelease }} \
+            -r 'map(select(.prerelease==$pr)) | first | .tag_name // ""')
 
           echo "version=${TAG//v}" >> $GITHUB_OUTPUT
 
