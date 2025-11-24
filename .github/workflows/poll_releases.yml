@@ -85,7 +85,7 @@ jobs:
       prerelease-version: ${{ needs.check-upstream.outputs.prerelease-version }}
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
     
       - name: Update Readme (release)
         if: env.release-version != ''
@@ -159,7 +159,7 @@ jobs:
         include: ${{ fromJSON(needs.commit-and-push.outputs.matrix-include) }}
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Publish release
         uses: ncipollo/release-action@v1
@@ -224,7 +224,7 @@ jobs:
             org.opencontainers.image.source="https://github.com/rakshasa/rtorrent"
             org.opencontainers.image.url="https://github.com/rakshasa/rtorrent/wiki"
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           ref: ${{ matrix.tag }}
 
