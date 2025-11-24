@@ -12,8 +12,10 @@ ADD "https://github.com/nghttp2/nghttp2/releases/download/v1.66.0/nghttp2-1.66.0
 ADD "https://github.com/libressl/portable/releases/download/v4.1.0/libressl-4.1.0.tar.gz" "/archives/libressl.tar.gz"
 ADD "https://github.com/curl/curl/releases/download/curl-8_15_0/curl-8.15.0.tar.gz" "/archives/curl.tar.gz"
 ADD "https://ftpmirror.gnu.org/ncurses/ncurses-6.5.tar.gz" "/archives/ncurses.tar.gz"
-ADD "https://github.com/rakshasa/rtorrent/releases/download/v${RTORRENT_VERSION}/libtorrent-${RTORRENT_VERSION}.tar.gz" "/archives/libtorrent.tar.gz"
-ADD "https://github.com/rakshasa/rtorrent/releases/download/v${RTORRENT_VERSION}/rtorrent-${RTORRENT_VERSION}.tar.gz" "/archives/rtorrent.tar.gz"
+# ADD "https://github.com/rakshasa/rtorrent/releases/download/v${RTORRENT_VERSION}/libtorrent-${RTORRENT_VERSION}.tar.gz" "/archives/libtorrent.tar.gz"
+# ADD "https://github.com/rakshasa/rtorrent/releases/download/v${RTORRENT_VERSION}/rtorrent-${RTORRENT_VERSION}.tar.gz" "/archives/rtorrent.tar.gz"
+ADD "https://github.com/rakshasa/libtorrent/archive/refs/tags/v${RTORRENT_VERSION}.tar.gz" "/archives/libtorrent.tar.gz"
+ADD "https://github.com/rakshasa/rtorrent/archive/refs/tags/v${RTORRENT_VERSION}.tar.gz" "/archives/rtorrent.tar.gz"
 
 # Flag sets
 ARG OPTIMIZATION_FLAGS="-O3 -flto=auto -pipe -fdata-sections -ffunction-sections -pthread"
