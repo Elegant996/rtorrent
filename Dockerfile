@@ -138,11 +138,11 @@ RUN set -ex; \
     alpine-baselayout \
     busybox \
     ca-certificates \
+    catatonit \
     curl \
     jq \
     mktorrent \
     netcat-openbsd \
-    tini \
     tzdata \
     ; \
     rm -rf /sysroot/etc/apk /sysroot/lib/apk /sysroot/var/cache
@@ -159,7 +159,7 @@ EXPOSE 5000
 VOLUME [ "/download" ]
 ENV HOME="/download"
 WORKDIR $HOME
-ENTRYPOINT [ "/sbin/tini", "--", "/entrypoint.sh" ]
+ENTRYPOINT [ "/usr/bin/catatonit", "--", "/entrypoint.sh" ]
 CMD [ "/usr/local/bin/rtorrent", "-n", "-o", "import=/etc/rtorrent/rtorrent.rc" ]
 HEALTHCHECK --start-period=10s \
   CMD /usr/bin/nc -w 5 -z 127.0.0.1 5000 || exit 1
