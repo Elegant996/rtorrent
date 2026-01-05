@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1.7-labs
 
-FROM alpine:3.22 AS build-sysroot
+FROM alpine:3.23 AS build-sysroot
 
 ARG RTORRENT_VERSION
 
