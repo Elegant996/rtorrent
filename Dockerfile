@@ -7,11 +7,11 @@ ARG RTORRENT_VERSION
 # Add sources
 ADD "https://skarnet.org/toolchains/cross/x86_64-linux-musl_pc-14.2.0.tar.xz" "/archives/toolchain.tar.xz"
 ADD "https://github.com/madler/zlib/releases/download/v1.3.1/zlib-1.3.1.tar.gz" "/archives/zlib.tar.gz"
-ADD "https://github.com/c-ares/c-ares/releases/download/v1.34.5/c-ares-1.34.5.tar.gz" "/archives/c-ares.tar.gz"
-ADD "https://github.com/nghttp2/nghttp2/releases/download/v1.66.0/nghttp2-1.66.0.tar.gz" "/archives/nghttp2.tar.gz"
-ADD "https://github.com/libressl/portable/releases/download/v4.1.0/libressl-4.1.0.tar.gz" "/archives/libressl.tar.gz"
-ADD "https://github.com/curl/curl/releases/download/curl-8_15_0/curl-8.15.0.tar.gz" "/archives/curl.tar.gz"
-ADD "https://ftpmirror.gnu.org/ncurses/ncurses-6.5.tar.gz" "/archives/ncurses.tar.gz"
+ADD "https://github.com/c-ares/c-ares/releases/download/v1.34.6/c-ares-1.34.6.tar.gz" "/archives/c-ares.tar.gz"
+ADD "https://github.com/nghttp2/nghttp2/releases/download/v1.68.0/nghttp2-1.68.0.tar.gz" "/archives/nghttp2.tar.gz"
+ADD "https://github.com/libressl/portable/releases/download/v4.2.1/libressl-4.2.1.tar.gz" "/archives/libressl.tar.gz"
+ADD "https://github.com/curl/curl/releases/download/curl-8_18_0/curl-8.18.0.tar.gz" "/archives/curl.tar.gz"
+ADD "https://ftpmirror.gnu.org/ncurses/ncurses-6.6.tar.gz" "/archives/ncurses.tar.gz"
 ADD "https://github.com/rakshasa/rtorrent/releases/download/v${RTORRENT_VERSION}/libtorrent-${RTORRENT_VERSION}.tar.gz" "/archives/libtorrent.tar.gz"
 ADD "https://github.com/rakshasa/rtorrent/releases/download/v${RTORRENT_VERSION}/rtorrent-${RTORRENT_VERSION}.tar.gz" "/archives/rtorrent.tar.gz"
 
@@ -119,7 +119,7 @@ WORKDIR /rtorrent
 RUN set -ex; \
     tar -xvzf "/archives/rtorrent.tar.gz" --strip-components=1; \
     ./configure --prefix=/usr/local --sysconfdir=/etc --mandir=/usr/share/man --localstatedir=/var \
-    --disable-debug --disable-shared --enable-static --with-xmlrpc-tinyxml2 --host=${HOST}; \
+    --disable-debug --disable-shared --enable-static --with-lua --with-xmlrpc-tinyxml2 --host=${HOST}; \
     make -j"$(nproc)"; \
     make DESTDIR="/sysroot" install; \
     install -Dm644 doc/rtorrent.rc /sysroot/etc/rtorrent/rtorrent.rc; \
